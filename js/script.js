@@ -1,8 +1,8 @@
 window.addEventListener('DOMContentLoaded', () => {
     // Tabs
     const tabs = document.querySelectorAll('.tabheader__item'),
-        tabsContent = document.querySelectorAll('.tabcontent'),
-        tabsParent = document.querySelector('.tabheader__items');
+          tabsContent = document.querySelectorAll('.tabcontent'),
+          tabsParent = document.querySelector('.tabheader__items');
 
     function hideTabContent() {
 
@@ -44,10 +44,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function getTimeRemaining(endtime) {
         const t = Date.parse(endtime) - Date.parse(new Date()),
-            days = Math.floor(t / (1000 * 60 * 60 * 24)),
-            hours = Math.floor((t / (1000 * 60 * 60)) % 24),
-            minutes = Math.floor((t / 1000 / 60) % 60),
-            seconds = Math.floor((t / 1000) % 60);
+              days = Math.floor(t / (1000 * 60 * 60 * 24)),
+              hours = Math.floor((t / (1000 * 60 * 60)) % 24),
+              minutes = Math.floor((t / 1000 / 60) % 60),
+              seconds = Math.floor((t / 1000) % 60);
 
         return {
             'total': t,
@@ -68,11 +68,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function setClock(selector, endtime) {
         const timer = document.querySelector(selector),
-            days = timer.querySelector('#days'),
-            hours = timer.querySelector('#hours'),
-            minutes = timer.querySelector('#minutes'),
-            seconds = timer.querySelector('#seconds'),
-            timeInterval = setInterval(updateClock, 1000);
+              days = timer.querySelector('#days'),
+              hours = timer.querySelector('#hours'),
+              minutes = timer.querySelector('#minutes'),
+              seconds = timer.querySelector('#seconds'),
+              timeInterval = setInterval(updateClock, 1000);
 
         updateClock();
 
@@ -96,7 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Modal
 
     const modalTrigger = document.querySelectorAll('[data-modal]'),
-        modal = document.querySelector('.modal');
+          modal = document.querySelector('.modal');
 
     function openModal() {
         modal.classList.add('show');
@@ -183,36 +183,22 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    new MenuCard(
-        "img/tabs/vegy.jpg",
-        "vegy",
-        'Меню "Фитнес"',
-        'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-        9,
-        '.menu .container',
-        'menu__item',
-        'big'
-    ).render();
+    const getResource = async (url) => {
+        const res = await fetch(url);
 
-    new MenuCard(
-        "img/tabs/elite.jpg",
-        "elite",
-        'Меню “Премиум”',
-        'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-        14,
-        '.menu .container',
-        'menu__item'
-    ).render();
+        if (!res.ok) {
+            throw new Error(`Could not fetch ${url}, ststus: ${res.status}`);
+        }
 
-    new MenuCard(
-        "img/tabs/post.jpg",
-        "post",
-        'Меню "Постное"',
-        'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-        21,
-        '.menu .container',
-        'menu__item'
-    ).render();
+        return await res.json();
+    };
+
+    getResource('http://localhost:3000/menu')
+        .then(data => {
+            data.forEach(({img, altimg, title, descr, price}) => {
+                new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+            });
+        });
 
     // Forms
 
@@ -225,10 +211,22 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     forms.forEach(item => {
-        postData(item);
+        bindPostData(item);
     });
 
-    function postData(form) {
+    const postData = async (url, data) => {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: data
+        });
+
+        return await res.json();
+    };
+
+    function bindPostData(form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -242,19 +240,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const formData = new FormData(form); // не забыть атрибут name у инпута
 
-            const object = {};
-            formData.forEach(function(value, key) {
-                object[key] = value;
-            });
+            const json = JSON.stringify(Object.fromEntries(formData.entries()));
 
-            fetch('server.php', {
-                method: "POST",
-                headers: {
-                    'Content-type': 'application/json'
-                },
-                body: JSON.stringify(object)
-            })
-            .then(data => data.text())
+            postData('http://localhost:3000/requests', json)
             .then(data => {
                 console.log(data);
                 showThanksModal(message.success);
@@ -264,17 +252,6 @@ window.addEventListener('DOMContentLoaded', () => {
             }).finally(() => {
                 form.reset();
             });
-
-            // request.addEventListener('load', () => {
-            //     if (request.status === 200) {
-            //         console.log(request.response);
-            //         showThanksModal(message.success);
-            //         form.reset();
-            //         statusMessage.remove();
-            //     } else {
-            //         showThanksModal(message.failure);
-            //     }
-            // });
         });
     }
 
@@ -302,13 +279,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }, 4000);
     }
 
-    // fetch('https://jsonplaceholder.typicode.com/posts', {
-    //     method: "POST",
-    //     body: JSON.stringify({name: 'Alex'}),
-    //     headers: {
-    //         'Content-type': 'application/json'
-    //     }
-    // })
-    // .then(response => response.json())
-    // .then(json => console.log(json));
+    // fetch('http://localhost:3000/menu')
+    //     .then(data => data.json())
+    //     .then(res => console.log(res));
 });
