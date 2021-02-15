@@ -51,7 +51,8 @@ function slider() {
     }
 
     function deleteNotDigits(str) {
-        return +str.replace(/\D/g, '');
+        // return +str.replace(/\D/g, '');
+        return +str.substring(0, str.length-2);
     }
 
     function dotOpacity() {
